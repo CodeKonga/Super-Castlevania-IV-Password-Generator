@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Castlevania IV Password Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Spectral:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column — name entry, then a wrapping wall of 4x4 password slates. Single dark castle look. */
+:root {
+  color-scheme: dark;
+  --bg: #15121a;
+  --stone: #221d29;
+  --stone-edge: #3a3244;
+  --fg: #e9e2d4;
+  --muted: #a69cae;
+  --gold: #d9a441;
+  --blood: #b8333b;
+  --water: #4f8fd6;
+  --steel: #c9ccd4;
+  --font-display: "IM Fell English SC", "Times New Roman", serif;
+  --font-body: "Spectral", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 48px; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.1; margin: 0; color: var(--gold); text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 62ch; }
+.entry { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.field { display: grid; gap: 6px; }
+label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+#name { font-family: var(--font-mono); font-size: 1.4rem; letter-spacing: .3em; width: 13ch; max-width: 100%; padding: 8px 12px; background: var(--stone); color: var(--fg); border: 1px solid var(--stone-edge); border-radius: 4px; text-transform: uppercase; }
+#name:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.cells { display: flex; gap: 4px; }
+.cell { width: 1.6em; height: 1.9em; display: grid; place-items: center; font-family: var(--font-mono); background: var(--stone); border-bottom: 2px solid var(--stone-edge); color: var(--fg); }
+.cell.bad { color: var(--blood); }
+fieldset.quest { border: 0; margin: 0; padding: 0; min-width: 0; }
+fieldset.quest legend { padding: 0; margin-bottom: 6px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--stone-edge); border-radius: 4px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { cursor: pointer; padding: 9px 14px; font-family: var(--font-body); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--muted); background: var(--stone); }
+.seg label + input + label { border-left: 1px solid var(--stone-edge); }
+.seg input:checked + label { background: var(--gold); color: var(--bg); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--gold); outline-offset: -2px; }
+.hint { font-size: 14px; color: var(--muted); margin: 0; flex-basis: 100%; max-width: 70ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { width: 20px; height: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+.slate { background: var(--stone); border: 1px solid var(--stone-edge); border-radius: 6px; padding: 12px; display: grid; gap: 10px; }
+.slate h2 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; color: var(--fg); }
+.slate h2 small { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.sq { aspect-ratio: 1; max-width: 100%; background: var(--bg); border: 1px solid var(--stone-edge); border-radius: 3px; display: grid; place-items: center; }
+.sq svg { width: 72%; height: 72%; }
+.sq svg.axe { width: 81%; height: 81%; }
+footer { font-size: 13px; color: var(--muted); }
+footer code { font-family: var(--font-mono); font-size: 12px; }
+@media (prefers-reduced-motion: no-preference) { .sq svg { transition: transform .15s; } .slate:hover .sq svg { transform: scale(1.06); } }
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-axe" viewBox="0 0 24 24">
+      <g id="axe-g" transform="translate(12 12) scale(1.027) translate(-11.045 -11.045) rotate(-45 12 12)">
+        <rect x="11.1" y="3" width="1.8" height="23" rx="0.5" fill="var(--gold)"/>
+        <path d="M12 0.4 L13.2 2.6 L12 4 L10.8 2.6 Z" fill="var(--gold)"/>
+        <path d="M13.50 4.70 Q16.40 4.60 19.40 1.80 Q21.60 7.60 19.40 13.40 Q16.40 10.60 13.50 10.50 Z" fill="var(--steel)"/>
+        <path d="M10.50 4.70 Q7.60 4.60 4.60 1.80 Q2.40 7.60 4.60 13.40 Q7.60 10.60 10.50 10.50 Z" fill="var(--steel)"/>
+        <path d="M19.40 1.80 Q21.60 7.60 19.40 13.40 Q19.90 7.60 19.40 1.80 Z" fill="var(--fg)"/>
+        <path d="M4.60 1.80 Q2.40 7.60 4.60 13.40 Q4.10 7.60 4.60 1.80 Z" fill="var(--fg)"/>
+        <rect x="10.1" y="4.30" width="3.8" height="6.6" rx="0.5" fill="var(--stone-edge)"/>
+      </g>
+    </symbol>
+    <symbol id="i-water" viewBox="0 0 24 24">
+      <path d="M8.6 9.2 V11.2 C8.6 12 8.2 12.4 7 13 L5.4 14 C4.4 14.5 4 15.2 4 16.2 V20.4 C4 21.8 5 22.8 6.4 22.8 H17.6 C19 22.8 20 21.8 20 20.4 V16.2 C20 15.2 19.6 14.5 18.6 14 L17 13 C15.8 12.4 15.4 12 15.4 11.2 V9.2 Z" fill="var(--stone-edge)"/>
+      <path d="M8.6 9.2 V11.2 C8.6 12 8.2 12.4 7 13 L5.4 14 C4.4 14.5 4 15.2 4 16.2 V20.4 C4 21.8 5 22.8 6.4 22.8 H17.6 C19 22.8 20 21.8 20 20.4 V16.2 C20 15.2 19.6 14.5 18.6 14 L17 13 C15.8 12.4 15.4 12 15.4 11.2 V9.2" fill="none" stroke="var(--steel)" stroke-width="1" stroke-linejoin="round"/>
+      <path d="M5.2 16.4 Q12 15.2 18.8 16.4 V20.2 C18.8 21.1 18.2 21.6 17.4 21.6 H6.6 C5.8 21.6 5.2 21.1 5.2 20.2 Z" fill="var(--water)"/>
+      <rect x="6.6" y="17.2" width="1.4" height="2.8" rx="0.3" fill="var(--fg)"/>
+      <rect x="11.15" y="0.6" width="1.7" height="12.4" fill="var(--blood)"/>
+      <rect x="8.95" y="2.8" width="6.1" height="1.7" fill="var(--blood)"/>
+      <rect x="7.6" y="7.4" width="8.8" height="2.1" rx="0.3" fill="var(--blood)"/>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24">
+      <path d="M12 21 C5 15.5 2.5 12.5 2.5 8.5 C2.5 5.5 4.8 3.5 7.4 3.5 C9.4 3.5 11 4.7 12 6.4 C13 4.7 14.6 3.5 16.6 3.5 C19.2 3.5 21.5 5.5 21.5 8.5 C21.5 12.5 19 15.5 12 21 Z" fill="var(--blood)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>Super Castlevania IV Password Generator</h1>
+    <p class="sub">Type the name you entered on the game's name screen. Every stage password for that name appears below, ready to copy onto the password grid.</p>
+  </header>
+
+  <div class="entry">
+    <div class="field">
+      <label for="name">Player name</label>
+      <input id="name" maxlength="8" autocomplete="off" spellcheck="false" value="SIMON">
+    </div>
+    <div class="field">
+      <label>As the game reads it</label>
+      <div class="cells" id="cells"></div>
+    </div>
+    <fieldset class="field quest">
+      <legend>Quest</legend>
+      <div class="seg">
+        <input type="radio" name="quest" id="q1" value="0" checked><label for="q1">First</label>
+        <input type="radio" name="quest" id="q2" value="1"><label for="q2">Second</label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="legend" aria-label="Icon key">
+    <span><svg><use href="#i-axe"/></svg>Axe</span>
+    <span><svg><use href="#i-water"/></svg>Holy water</span>
+    <span><svg><use href="#i-heart"/></svg>Heart</span>
+    <span><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="var(--stone-edge)"/></svg>Empty</span>
+  </div>
+
+  <div class="grid" id="out"></div>
+
+  <footer>Based on TFG's <code>scv4pg</code> password generator. This version supports second quest passwords and correctly handles spaces in player names and names with eight characters.</footer>
+</div>
+
+<script>
+const CNT = [0x02,0x03,0x01,0x00,0x03,0x02,0x02,0x01,0x03,0x01,0x00,0x00,0x01,0x02,0x03,0x00,
+             0x01,0x01,0x02,0x00,0x03,0x03,0x00,0x02,0x00,0x01,0x02,0x02,0x00,0x03,0x01,0x03];
+const AREA = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,0x0C,0x0C,0x0C,0x0C,
+              0x0C,0x0C,0x12,0x12,0x12,0x12,0x12,0x12,0x18,0x18,0x1A,0x1A,0x1A,0x1A,0x1A,0x1A,
+              0x1A,0x1A,0x1A,0x23,0x23,0x23,0x23,0x23,0x23,0x23,0x2A,0x2A,0x2A,0x2A,0x2E,0x2E,
+              0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x37,0x37,0x37,0x37,0x37,0x3C,0x3C,0x3C,0x3F,
+              0x40,0x41,0x42,0x42];
+const LEVELS = [...new Set(AREA)];
+
+function nameCodes(s) {
+  const out = [];
+  for (let i = 0; i < 8; i++) {
+    const ch = s.charCodeAt(i);
+    let v = 0;
+    if (ch >= 49 && ch <= 57) v = ch - 47;
+    else if (ch >= 65 && ch <= 90) v = ch - 54;
+    else if (ch >= 97 && ch <= 122) v = ch - 86;
+    out.push(v);
+  }
+  return out;
+}
+
+function password(level, codes, quest) {
+  // quest: 0 = first quest, 1 = second quest (RAM $88). The game adds $88 into the checksum too.
+  let c = level + quest;
+  for (const v of codes) c += v ^ 0xff;
+  const chk = [level & 0xff, quest, c & 0xff, (c >> 8) & 0xff];
+  const pw = [];
+  for (let j = 0; j < 32; j += 2) pw.push((chk[CNT[j]] >> (CNT[j + 1] * 2)) & 3);
+  return pw; // 0 empty, 1 axe, 2 holy water, 3 heart
+}
+
+const ICON = [null, "i-axe", "i-water", "i-heart"];
+const LABEL = ["empty", "axe", "holy water", "heart"];
+const GLYPH = c => c >= 2 && c <= 10 ? String(c - 1) : c >= 11 ? String.fromCharCode(c + 54) : "·";
+
+function render() {
+  const raw = document.getElementById("name").value;
+  const quest = document.getElementById("q2").checked ? 1 : 0;
+  const codes = nameCodes(raw);
+  const illegal = /[^A-Za-z1-9 ]/.test(raw);
+  document.getElementById("cells").innerHTML = codes.map((c, i) => {
+    const typed = raw[i];
+    const bad = typed !== undefined && typed !== " " && c === 0;
+    return `<span class="cell${bad ? " bad" : ""}">${GLYPH(c)}</span>`;
+  }).join("");
+  document.getElementById("out").innerHTML = LEVELS.map((lv, n) => {
+    const pw = illegal ? new Array(16).fill(0) : password(lv, codes, quest);
+    const sq = pw.map(p => `<div class="sq" title="${LABEL[p]}">${ICON[p] ? `<svg role="img"${p === 1 ? ' class="axe"' : ""} aria-label="${LABEL[p]}"><use href="#${ICON[p]}"/></svg>` : ""}</div>`).join("");
+    return `<section class="slate"><h2>Level ${n + 1}</h2><div class="board">${sq}</div></section>`;
+  }).join("");
+  try { localStorage.setItem("sciv-name", raw); localStorage.setItem("sciv-quest", String(quest)); } catch (e) {}
+}
+
+try {
+  const saved = localStorage.getItem("sciv-name"); if (saved !== null) document.getElementById("name").value = saved;
+  if (localStorage.getItem("sciv-quest") === "1") document.getElementById("q2").checked = true;
+} catch (e) {}
+document.getElementById("name").addEventListener("input", render);
+document.querySelectorAll('input[name="quest"]').forEach(el => el.addEventListener("change", render));
+render();
+</script>
+
+</body>
+</html>
